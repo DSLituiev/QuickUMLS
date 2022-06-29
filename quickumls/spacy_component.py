@@ -1,14 +1,17 @@
 import spacy
 from spacy.tokens import Span
 from spacy.strings import StringStore
+from spacy.language import Language
 
 from .core import QuickUMLS
 from . import constants
 
+
 class SpacyQuickUMLS(object):
-    name = 'QuickUMLS matcher'
     
-    def __init__(self, nlp, quickumls_fp, best_match=True, ignore_syntax=False, **kwargs):
+    def __init__(self, nlp=None, 
+                name = 'QuickUMLS matcher',
+                quickumls_path = "", best_match=True, ignore_syntax=False, **kwargs):
         """Instantiate SpacyQuickUMLS object
 
             This creates a QuickUMLS spaCy component which can be used in modular pipelines.  
@@ -16,13 +19,13 @@ class SpacyQuickUMLS(object):
 
         Args:
             nlp: Existing spaCy pipeline.  This is needed to update the vocabulary with UMLS CUI values
-            quickumls_fp (str): Path to QuickUMLS data
+            quickumls_path (str): Path to QuickUMLS data
             best_match (bool, optional): Whether to return only the top match or all overlapping candidates. Defaults to True.
             ignore_syntax (bool, optional): Wether to use the heuristcs introduced in the paper (Soldaini and Goharian, 2016). TODO: clarify,. Defaults to False
             **kwargs: QuickUMLS keyword arguments (see QuickUMLS in core.py)
         """
         
-        self.quickumls = QuickUMLS(quickumls_fp, 
+        self.quickumls = QuickUMLS(quickumls_path,
             # By default, the QuickUMLS objects creates its own internal spacy pipeline but this is not needed
             # when we're using it as a component in a pipeline
             spacy_component = True,
@@ -65,3 +68,12 @@ class SpacyQuickUMLS(object):
                 doc.ents = list(doc.ents) + [span]
                 
         return doc
+
+
+@Language.factory(
+    "quickumls",
+    default_config={"path": ""},
+)
+def quickumls_pipe(nlp=None, name="quickumls", path=""):
+    return SpacyQuickUMLS(nlp, name=name, quickumls_path=path)
+
